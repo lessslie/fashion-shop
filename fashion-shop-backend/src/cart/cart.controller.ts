@@ -20,7 +20,7 @@ import {
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
-import { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
+import { RequestWithUser } from '../common/interfaces/request-with-user.interface';
 
 
 @ApiTags('Cart')
@@ -40,7 +40,7 @@ export class CartController {
     status: 401,
     description: 'No autorizado',
   })
-  getCart(@Req() req: any) {
+  getCart(@Req() req: RequestWithUser) {
     return this.cartService.getCart(req.user.id);
   }
 
@@ -63,7 +63,7 @@ export class CartController {
     status: 404,
     description: 'Variante no encontrada',
   })
-  addItem(@Req() req: any, @Body() addToCartDto: AddToCartDto) {
+  addItem(@Req() req: RequestWithUser, @Body() addToCartDto: AddToCartDto) {
     return this.cartService.addItem(req.user.id, addToCartDto);
   }
 
@@ -87,7 +87,7 @@ export class CartController {
     description: 'Item no encontrado en el carrito',
   })
   updateItem(
-    @Req() req: any,
+    @Req() req: RequestWithUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCartItemDto: UpdateCartItemDto,
   ) {
@@ -110,7 +110,7 @@ export class CartController {
     status: 404,
     description: 'Item no encontrado en el carrito',
   })
-  removeItem(@Req() req: any, @Param('id', ParseUUIDPipe) id: string) {
+  removeItem(@Req() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.cartService.removeItem(req.user.id, id);
   }
 
@@ -126,7 +126,7 @@ export class CartController {
     status: 401,
     description: 'No autorizado',
   })
-  clearCart(@Req() req: any) {
+  clearCart(@Req() req: RequestWithUser) {
     return this.cartService.clearCart(req.user.id);
   }
 }

@@ -1,10 +1,8 @@
 // src/cloudinary/cloudinary.controller.ts
-import { Controller, Post, UploadedFile, UseInterceptors, Delete, Param, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, UploadedFile, UseInterceptors, Delete, Get, Query, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { Public } from '../common/decorators/public.decorator';
-import { UploadApiResponse } from 'cloudinary';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Roles, UserRole } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
@@ -43,7 +41,7 @@ export class CloudinaryController {
   })
   async uploadFile(@UploadedFile() file: MulterFile) {
     try {
-      const result = await this.cloudinaryService.uploadFile(file) as UploadApiResponse;
+      const result = await this.cloudinaryService.uploadFile(file);
       return {
         success: true,
         message: 'Archivo subido exitosamente',
@@ -56,12 +54,14 @@ export class CloudinaryController {
           bytes: result.bytes,
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       return {
         success: false,
         message: 'Error al subir el archivo',
-        error: error.message,
+        error: errorMessage,
       };
+    
     }
   }
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -81,12 +81,14 @@ async deleteFile(@Query('publicId') publicId: string) {
       };
     }
     throw new Error('No se pudo eliminar el archivo');
-  } catch (error: any) {
-    return {
-      success: false,
-      message: 'Error al eliminar el archivo',
-      error: error.message,
-    };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+  return {
+    success: false,
+    message: 'Error al eliminar el archivo',
+    error: errorMessage,
+  };
+  
   }
 }
 
@@ -109,18 +111,20 @@ async deleteFile(@Query('publicId') publicId: string) {
         crop,
       };
       
-      const url = this.cloudinaryService.getOptimizedUrl(publicId, options);
+      const url = this.cloudinaryService.getOptimizedUrl(publicId);
       return {
         success: true,
         url,
         options,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       return {
         success: false,
         message: 'Error al generar la URL',
-        error: error.message,
+        error: errorMessage,
       };
+    
     }
   }
 }

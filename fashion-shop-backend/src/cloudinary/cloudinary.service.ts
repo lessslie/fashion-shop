@@ -25,7 +25,7 @@ export class CloudinaryService {
           resource_type: 'auto',
         },
         (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
-          if (error) return reject(error);
+          if (error) return reject(new Error(error.message || 'Error al subir archivo'));
           if (!result) {
             return reject(new Error('No se pudo cargar el archivo'));
           }
@@ -38,14 +38,16 @@ export class CloudinaryService {
       readableStream.push(null);
       readableStream.pipe(uploadStream);
     });
-
-}
-
-  async deleteFile(publicId: string): Promise<{ result: string }> {
-    return this.cloudinaryInstance.uploader.destroy(publicId);
   }
 
-  getOptimizedUrl(publicId: string, options: Record<string, any> = {}): string {
+  async deleteFile(publicId: string): Promise<{ result: string }> {
+    const response = await this.cloudinaryInstance.uploader.destroy(publicId) as { result?: string };
+    return { 
+      result: response.result || 'ok'
+    };
+  }
+
+  getOptimizedUrl(publicId: string, options: Record<string, string | number | boolean> = {}): string {
     const defaultOptions = {
       fetch_format: 'auto',
       quality: 'auto',

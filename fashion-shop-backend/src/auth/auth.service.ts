@@ -37,7 +37,7 @@ const user = await this.usersService.create({
   email: registerDto.email,
   password: hashedPassword,
   name: registerDto.name,
-  phone: registerDto.phone as (string | null | undefined),
+  phone: registerDto.phone,
   role: UserRole.USER,
 });
 

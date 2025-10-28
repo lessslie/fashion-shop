@@ -11,6 +11,7 @@ import { ProductVariant } from '../products/entities/product-variant.entity';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { Product } from '../products/entities/product.entity';
+import { CartResponse, CartTotals } from './interfaces/cart-response.interface';
 
 @Injectable()
 export class CartService {
@@ -42,7 +43,7 @@ export class CartService {
   }
 
   // ==================== OBTENER CARRITO DEL USUARIO ====================
-  async getCart(userId: string) {
+  async getCart(userId: string): Promise<CartResponse> {
     const cart = await this.getOrCreateCart(userId);
 
     // Calcular totales
@@ -55,7 +56,7 @@ export class CartService {
   }
 
   // ==================== CALCULAR TOTALES DEL CARRITO ====================
-  private calculateTotals(cart: Cart) {
+  private calculateTotals(cart: Cart): CartTotals {
     let subtotal = 0;
     let discount = 0;
     let total = 0;
@@ -123,7 +124,7 @@ export class CartService {
   }
 
   // ==================== AGREGAR ITEM AL CARRITO ====================
-  async addItem(userId: string, addToCartDto: AddToCartDto) {
+  async addItem(userId: string, addToCartDto: AddToCartDto): Promise<CartResponse> {
     const { variantId, quantity } = addToCartDto;
 
     // Verificar que la variante existe y está activa
@@ -186,7 +187,7 @@ export class CartService {
     userId: string,
     itemId: string,
     updateCartItemDto: UpdateCartItemDto,
-  ) {
+  ):Promise<CartResponse> {
     const { quantity } = updateCartItemDto;
 
     // Obtener carrito del usuario
@@ -214,7 +215,7 @@ export class CartService {
   }
 
   // ==================== REMOVER ITEM DEL CARRITO ====================
-  async removeItem(userId: string, itemId: string) {
+  async removeItem(userId: string, itemId: string): Promise<CartResponse> {
     // Obtener carrito del usuario
     const cart = await this.getOrCreateCart(userId);
 
@@ -232,7 +233,7 @@ export class CartService {
   }
 
   // ==================== VACIAR CARRITO ====================
-  async clearCart(userId: string) {
+  async clearCart(userId: string):Promise<CartResponse> {
     const cart = await this.getOrCreateCart(userId);
 
     // Eliminar todos los items

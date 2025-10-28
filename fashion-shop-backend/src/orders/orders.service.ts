@@ -11,6 +11,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { CartService } from '../cart/cart.service';
 import { ProductVariant } from '../products/entities/product-variant.entity';
+import { DiscountType, Product } from '../products/entities/product.entity';
 
 @Injectable()
 export class OrdersService {
@@ -85,7 +86,7 @@ export class OrdersService {
 
       // Calcular descuento si aplica
       if (product.hasDiscount && this.isDiscountActive(product)) {
-        if (product.discountType === 'PERCENTAGE') {
+        if (product.discountType === DiscountType.PERCENTAGE) {
           discountAmount = (unitPrice * Number(product.discountValue)) / 100;
         } else {
           discountAmount = Math.min(Number(product.discountValue), unitPrice);
@@ -157,21 +158,24 @@ export class OrdersService {
   }
 
   // ==================== VERIFICAR SI DESCUENTO ESTÁ ACTIVO ====================
-  private isDiscountActive(product: any): boolean {
-    if (!product.hasDiscount) return false;
 
-    const now = new Date();
+private isDiscountActive(product: Product): boolean {
+  if (!product.hasDiscount) return false;
 
-    if (product.discountStartDate && new Date(product.discountStartDate) > now) {
-      return false;
-    }
+  const now = new Date();
 
-    if (product.discountEndDate && new Date(product.discountEndDate) < now) {
-      return false;
-    }
-
-    return true;
+  if (product.discountStartDate) {
+    const startDate = new Date(product.discountStartDate);
+    if (startDate > now) return false;
   }
+
+  if (product.discountEndDate) {
+    const endDate = new Date(product.discountEndDate);
+    if (endDate < now) return false;
+  }
+
+  return true;
+}
 
   // ==================== OBTENER TODAS LAS ÓRDENES (ADMIN) ====================
   async findAll(filters?: {

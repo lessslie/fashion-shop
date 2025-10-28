@@ -6,7 +6,6 @@ import {
   Matches,
   MinLength,
   IsOptional,
-  IsPhoneNumber,
 } from 'class-validator';
 
 export class RegisterDto {

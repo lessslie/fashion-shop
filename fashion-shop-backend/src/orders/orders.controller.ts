@@ -21,7 +21,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { Roles, UserRole } from '../common/decorators/roles.decorator';
 import { OrderStatus, PaymentStatus } from './entities/order.entity';
-import { RequestWithUser } from '../common/interfaces/request-with-user.interface';
+import { RequestWithUser } from '../common/interfaces';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -48,7 +48,7 @@ export class OrdersController {
     status: 401,
     description: 'No autorizado',
   })
-  create(@Req() req: any, @Body() createOrderDto: CreateOrderDto) {
+  create(@Req() req: RequestWithUser, @Body() createOrderDto: CreateOrderDto) {
     return this.ordersService.create(req.user.id, createOrderDto);
   }
 
@@ -111,7 +111,7 @@ export class OrdersController {
     status: 401,
     description: 'No autorizado',
   })
-  findMyOrders(@Req() req: any) {
+  findMyOrders(@Req() req: RequestWithUser ) {
     return this.ordersService.findByUser(req.user.id);
   }
 
@@ -134,7 +134,7 @@ export class OrdersController {
     status: 404,
     description: 'Orden no encontrada',
   })
-  async findOne(@Req() req: any, @Param('id', ParseUUIDPipe) id: string) {
+  async findOne(@Req() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
     const order = await this.ordersService.findOne(id);
 
     // Si no es admin, solo puede ver sus propias órdenes
@@ -198,7 +198,7 @@ export class OrdersController {
     status: 404,
     description: 'Orden no encontrada',
   })
-  async cancel(@Req() req: any, @Param('id', ParseUUIDPipe) id: string) {
+  async cancel(@Req() req: RequestWithUser, @Param('id', ParseUUIDPipe) id: string) {
     const order = await this.ordersService.findOne(id);
 
     // Si no es admin, solo puede cancelar sus propias órdenes
