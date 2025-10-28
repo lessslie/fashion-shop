@@ -5,6 +5,8 @@ import {
   IsString,
   Matches,
   MinLength,
+  IsOptional,
+  IsPhoneNumber,
 } from 'class-validator';
 
 export class RegisterDto {
@@ -36,4 +38,14 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'El nombre es obligatorio' })
   @MinLength(2, { message: 'El nombre debe tener al menos 2 caracteres' })
   name: string;
+
+
+  @ApiProperty({
+    example: '+5491123456789',
+    description: 'Teléfono del usuario (opcional)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  phone?: string | null;
 }

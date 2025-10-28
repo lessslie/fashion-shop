@@ -33,18 +33,20 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
     // Crear usuario con rol CUSTOMER por defecto
-    const user = await this.usersService.create({
-      email: registerDto.email,
-      password: hashedPassword,
-      name: registerDto.name,
-      role: UserRole.USER,
-    });
+const user = await this.usersService.create({
+  email: registerDto.email,
+  password: hashedPassword,
+  name: registerDto.name,
+  phone: registerDto.phone as (string | null | undefined),
+  role: UserRole.USER,
+});
 
     // Generar token JWT
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
+
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -55,6 +57,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+
         role: user.role,
       },
     };

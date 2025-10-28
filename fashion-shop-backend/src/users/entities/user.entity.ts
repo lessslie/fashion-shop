@@ -1,9 +1,13 @@
+import { Cart } from 'src/cart/entities/cart.entity';
+import { Order } from 'src/orders/entities/order.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
+  OneToOne,
 } from 'typeorm';
 
 export enum UserRole {
@@ -13,7 +17,6 @@ export enum UserRole {
 
 @Entity('users')
 export class User {
-  // ← Asegurate que tenga "export" acá
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -32,6 +35,28 @@ export class User {
     default: UserRole.USER,
   })
   role: UserRole;
+
+
+@Column({ 
+  type: 'varchar',  // Especifica el tipo de columna explícitamente
+  nullable: true,   // Permite valores NULL
+  default: null     // Valor por defecto
+})
+phone: string | null;  // Solo string o null 
+
+ 
+  
+  @OneToOne(() => Cart, (cart) => cart.user)
+  cart: Cart;
+
+  @OneToMany(() => Order, (order) => order.user)
+  orders: Order[];
+
+  // @OneToOne(() => Wishlist, (wishlist) => wishlist.user)
+  // wishlist: Wishlist;
+
+  // @OneToMany(() => Review, (review) => review.user)
+  // reviews: Review[];
 
   @CreateDateColumn()
   createdAt: Date;
