@@ -54,7 +54,6 @@ export class CloudinaryService {
       width: 800,
       crop: 'limit',
     };
-    
     return this.cloudinaryInstance.url(publicId, {
       ...defaultOptions,
       ...options,

@@ -10,6 +10,9 @@ import { ProductVariant } from './entities/product-variant.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductVariantDto } from './dto/create-product-variant.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponse } from '../common/interfaces/pagination.interface';
+import { createPaginatedResponse } from '../common/helpers/pagination.helper';
 
 @Injectable()
 export class ProductsService {
@@ -215,17 +218,20 @@ export class ProductsService {
     }
   }
 
-  // ==================== BUSCAR TODOS LOS PRODUCTOS ====================
-  async findAll(filters?: {
-    category?: string;
-    status?: ProductStatus;
-    isFeatured?: boolean;
-    isNew?: boolean;
-    minPrice?: number;
-    maxPrice?: number;
-    styleTags?: string[];
-    categoryTags?: string[];
-  }): Promise<Product[]> {
+  // ==================== BUSCAR TODOS LOS PRODUCTOS CON PAGINACIÓN ====================
+  async findAll(
+    paginationDto: PaginationDto,
+    filters?: {
+      category?: string;
+      status?: ProductStatus;
+      isFeatured?: boolean;
+      isNew?: boolean;
+      minPrice?: number;
+      maxPrice?: number;
+      styleTags?: string[];
+      categoryTags?: string[];
+    },
+  ): Promise<PaginatedResponse<Product>> {
     const query = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.variants', 'variants')
@@ -264,10 +270,22 @@ export class ProductsService {
       });
     }
 
-    // Ordenar por fecha de creación (más recientes primero)
-    query.orderBy('product.createdAt', 'DESC');
+    // Ordenar por campo especificado o por defecto createdAt
+    const sortBy = paginationDto.sortBy || 'createdAt';
+    const sortOrder = paginationDto.sortOrder || 'DESC';
+    query.orderBy(`product.${sortBy}`, sortOrder);
 
-    return query.getMany();
+    // Contar total de items antes de paginar
+    const totalItems = await query.getCount();
+
+    // Aplicar paginación
+    query.skip(paginationDto.getSkip()).take(paginationDto.getTake());
+
+    // Obtener resultados
+    const products = await query.getMany();
+
+    // Retornar respuesta paginada
+    return createPaginatedResponse(products, totalItems, paginationDto);
   }
 
   // ==================== BUSCAR PRODUCTO POR ID ====================
@@ -342,9 +360,12 @@ export class ProductsService {
     return this.findOne(id);
   }
 
-  // ==================== BUSCAR PRODUCTOS (SEARCH) ====================
-  async search(query: string): Promise<Product[]> {
-    return this.productRepository
+  // ==================== BUSCAR PRODUCTOS (SEARCH) CON PAGINACIÓN ====================
+  async search(
+    query: string,
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<Product>> {
+    const queryBuilder = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.variants', 'variants')
       .where('product.deletedAt IS NULL')
@@ -352,7 +373,18 @@ export class ProductsService {
         '(LOWER(product.name) LIKE LOWER(:query) OR LOWER(product.description) LIKE LOWER(:query) OR LOWER(product.brand) LIKE LOWER(:query))',
         { query: `%${query}%` },
       )
-      .orderBy('product.viewCount', 'DESC')
-      .getMany();
+      .orderBy('product.viewCount', 'DESC');
+
+    // Contar total de items
+    const totalItems = await queryBuilder.getCount();
+
+    // Aplicar paginación
+    queryBuilder.skip(paginationDto.getSkip()).take(paginationDto.getTake());
+
+    // Obtener resultados
+    const products = await queryBuilder.getMany();
+
+    // Retornar respuesta paginada
+    return createPaginatedResponse(products, totalItems, paginationDto);
   }
 }

@@ -12,6 +12,9 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { CartService } from '../cart/cart.service';
 import { ProductVariant } from '../products/entities/product-variant.entity';
 import { DiscountType, Product } from '../products/entities/product.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponse } from '../common/interfaces/pagination.interface';
+import { createPaginatedResponse } from '../common/helpers/pagination.helper';
 
 @Injectable()
 export class OrdersService {
@@ -177,12 +180,15 @@ private isDiscountActive(product: Product): boolean {
   return true;
 }
 
-  // ==================== OBTENER TODAS LAS ÓRDENES (ADMIN) ====================
-  async findAll(filters?: {
-    status?: OrderStatus;
-    paymentStatus?: PaymentStatus;
-    userId?: string;
-  }): Promise<Order[]> {
+  // ==================== OBTENER TODAS LAS ÓRDENES (ADMIN) CON PAGINACIÓN ====================
+  async findAll(
+    paginationDto: PaginationDto,
+    filters?: {
+      status?: OrderStatus;
+      paymentStatus?: PaymentStatus;
+      userId?: string;
+    },
+  ): Promise<PaginatedResponse<Order>> {
     const query = this.orderRepository
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.items', 'items')
@@ -202,18 +208,50 @@ private isDiscountActive(product: Product): boolean {
       query.andWhere('order.userId = :userId', { userId: filters.userId });
     }
 
-    query.orderBy('order.createdAt', 'DESC');
+    // Ordenar por campo especificado o por defecto createdAt
+    const sortBy = paginationDto.sortBy || 'createdAt';
+    const sortOrder = paginationDto.sortOrder || 'DESC';
+    query.orderBy(`order.${sortBy}`, sortOrder);
 
-    return query.getMany();
+    // Contar total de items antes de paginar
+    const totalItems = await query.getCount();
+
+    // Aplicar paginación
+    query.skip(paginationDto.getSkip()).take(paginationDto.getTake());
+
+    // Obtener resultados
+    const orders = await query.getMany();
+
+    // Retornar respuesta paginada
+    return createPaginatedResponse(orders, totalItems, paginationDto);
   }
 
-  // ==================== OBTENER ÓRDENES DE UN USUARIO ====================
-  async findByUser(userId: string): Promise<Order[]> {
-    return this.orderRepository.find({
-      where: { userId },
-      relations: ['items'],
-      order: { createdAt: 'DESC' },
-    });
+  // ==================== OBTENER ÓRDENES DE UN USUARIO CON PAGINACIÓN ====================
+  async findByUser(
+    userId: string,
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<Order>> {
+    const query = this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.items', 'items')
+      .where('order.userId = :userId', { userId });
+
+    // Ordenar por createdAt DESC por defecto
+    const sortBy = paginationDto.sortBy || 'createdAt';
+    const sortOrder = paginationDto.sortOrder || 'DESC';
+    query.orderBy(`order.${sortBy}`, sortOrder);
+
+    // Contar total de items antes de paginar
+    const totalItems = await query.getCount();
+
+    // Aplicar paginación
+    query.skip(paginationDto.getSkip()).take(paginationDto.getTake());
+
+    // Obtener resultados
+    const orders = await query.getMany();
+
+    // Retornar respuesta paginada
+    return createPaginatedResponse(orders, totalItems, paginationDto);
   }
 
   // ==================== OBTENER DETALLE DE UNA ORDEN ====================

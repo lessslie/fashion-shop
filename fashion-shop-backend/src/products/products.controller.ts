@@ -24,6 +24,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { Roles, UserRole } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { ProductStatus } from './entities/product.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @ApiTags('Products')
 @Controller('products')
@@ -58,7 +59,31 @@ export class ProductsController {
   // ==================== LISTAR TODOS LOS PRODUCTOS (PÚBLICO) ====================
   @Get()
   @Public()
-  @ApiOperation({ summary: 'Listar todos los productos con filtros opcionales' })
+  @ApiOperation({ summary: 'Listar todos los productos con filtros y paginación' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items por página (default: 10, max: 100)',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    type: String,
+    description: 'Campo por el cual ordenar (default: createdAt)',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['ASC', 'DESC'],
+    description: 'Orden ascendente o descendente (default: DESC)',
+  })
   @ApiQuery({
     name: 'category',
     required: false,
@@ -95,9 +120,10 @@ export class ProductsController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de productos',
+    description: 'Lista paginada de productos',
   })
   findAll(
+    @Query() paginationDto: PaginationDto,
     @Query('category') category?: string,
     @Query('status') status?: ProductStatus,
     @Query('isFeatured') isFeatured?: string,
@@ -114,25 +140,37 @@ export class ProductsController {
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
     };
 
-    return this.productsService.findAll(filters);
+    return this.productsService.findAll(paginationDto, filters);
   }
 
   // ==================== BUSCAR PRODUCTOS POR TEXTO (PÚBLICO) ====================
   @Get('search')
   @Public()
-  @ApiOperation({ summary: 'Buscar productos por nombre, descripción o marca' })
+  @ApiOperation({ summary: 'Buscar productos por nombre, descripción o marca con paginación' })
   @ApiQuery({
     name: 'q',
     required: true,
     description: 'Texto de búsqueda',
     example: 'saco',
   })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items por página (default: 10, max: 100)',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Resultados de búsqueda',
+    description: 'Resultados de búsqueda paginados',
   })
-  search(@Query('q') query: string) {
-    return this.productsService.search(query);
+  search(@Query() paginationDto: PaginationDto, @Query('q') query: string) {
+    return this.productsService.search(query, paginationDto);
   }
 
   // ==================== VER PRODUCTO POR SLUG (PÚBLICO) ====================

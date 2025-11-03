@@ -22,7 +22,6 @@ import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { RequestWithUser } from '../common/interfaces/request-with-user.interface';
 
-
 @ApiTags('Cart')
 @Controller('cart')
 @ApiBearerAuth('JWT-auth')

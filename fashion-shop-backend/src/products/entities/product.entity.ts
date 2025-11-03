@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   OneToMany,
+  Index,
 } from 'typeorm';
 import { ProductVariant } from './product-variant.entity';
 
@@ -30,11 +31,17 @@ export enum DiscountType {
 }
 
 @Entity('products')
+@Index(['category', 'status']) // Índice compuesto para filtros frecuentes
+@Index(['slug']) // Ya es único, pero aseguramos el índice
+@Index(['createdAt']) // Para ordenamiento por fecha
+@Index(['isFeatured']) // Para productos destacados
+@Index(['isNew']) // Para productos nuevos
 export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
+  @Index() // Índice para búsquedas por nombre
   name: string;
 
   @Column({ unique: true })

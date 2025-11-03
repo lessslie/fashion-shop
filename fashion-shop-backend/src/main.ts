@@ -2,9 +2,21 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { winstonConfig } from './config/logger.config';
+import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: winstonConfig,
+  });
+
+  // Helmet - Seguridad de headers HTTP
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Deshabilitado para Swagger UI
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   // CORS - Permitir requests desde el frontend
   app.enableCors({
@@ -23,6 +35,9 @@ async function bootstrap() {
 
   // Prefijo global para todas las rutas
   app.setGlobalPrefix('api');
+
+  // Obtener el puerto antes de configurar Swagger
+  const port = process.env.PORT || 3000;
 
   // 🔥 CONFIGURACIÓN DE SWAGGER
   const config = new DocumentBuilder()
@@ -59,7 +74,7 @@ async function bootstrap() {
       },
       'JWT-auth', // Este nombre lo usamos en @ApiBearerAuth('JWT-auth')
     )
-    .addServer('http://localhost:3000', 'Desarrollo Local')
+    .addServer(`http://localhost:${port}`, 'Desarrollo Local')
     .addServer('https://api.fashionshop.com', 'Producción')
     .build();
 
@@ -81,7 +96,6 @@ async function bootstrap() {
     `,
   });
 
-  const port = process.env.PORT || 3000;
   await app.listen(port);
 
   console.log(`

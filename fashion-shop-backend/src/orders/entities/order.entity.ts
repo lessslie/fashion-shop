@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { OrderItem } from './order-item.entity';
@@ -34,11 +35,16 @@ export enum PaymentMethod {
 }
 
 @Entity('orders')
+@Index(['userId', 'status']) // Índice compuesto para órdenes por usuario y estado
+@Index(['orderNumber']) // Ya es único, pero aseguramos el índice
+@Index(['createdAt']) // Para ordenamiento por fecha
+@Index(['status', 'paymentStatus']) // Para filtros admin
 export class Order {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
+  @Index() // Índice para búsquedas por usuario
   userId: string;
 
   // Relación Many-to-One con User

@@ -22,6 +22,7 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { Roles, UserRole } from '../common/decorators/roles.decorator';
 import { OrderStatus, PaymentStatus } from './entities/order.entity';
 import { RequestWithUser } from '../common/interfaces';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -56,8 +57,32 @@ export class OrdersController {
   @Get()
   @Roles(UserRole.ADMIN)
   @ApiOperation({
-    summary: 'Obtener todas las órdenes (ADMIN)',
-    description: 'Lista todas las órdenes con filtros opcionales',
+    summary: 'Obtener todas las órdenes con paginación (ADMIN)',
+    description: 'Lista todas las órdenes con filtros opcionales y paginación',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items por página (default: 10, max: 100)',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    type: String,
+    description: 'Campo por el cual ordenar (default: createdAt)',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['ASC', 'DESC'],
+    description: 'Orden ascendente o descendente (default: DESC)',
   })
   @ApiQuery({
     name: 'status',
@@ -78,7 +103,7 @@ export class OrdersController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de órdenes',
+    description: 'Lista paginada de órdenes',
   })
   @ApiResponse({
     status: 401,
@@ -89,30 +114,43 @@ export class OrdersController {
     description: 'Forbidden - Solo ADMIN',
   })
   findAll(
+    @Query() paginationDto: PaginationDto,
     @Query('status') status?: OrderStatus,
     @Query('paymentStatus') paymentStatus?: PaymentStatus,
     @Query('userId') userId?: string,
   ) {
     const filters = { status, paymentStatus, userId };
-    return this.ordersService.findAll(filters);
+    return this.ordersService.findAll(paginationDto, filters);
   }
 
   // ==================== OBTENER MIS ÓRDENES (USUARIO) ====================
   @Get('my-orders')
   @ApiOperation({
-    summary: 'Obtener mis órdenes',
-    description: 'Lista todas las órdenes del usuario autenticado',
+    summary: 'Obtener mis órdenes con paginación',
+    description: 'Lista todas las órdenes del usuario autenticado con paginación',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items por página (default: 10, max: 100)',
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de órdenes del usuario',
+    description: 'Lista paginada de órdenes del usuario',
   })
   @ApiResponse({
     status: 401,
     description: 'No autorizado',
   })
-  findMyOrders(@Req() req: RequestWithUser ) {
-    return this.ordersService.findByUser(req.user.id);
+  findMyOrders(@Req() req: RequestWithUser, @Query() paginationDto: PaginationDto) {
+    return this.ordersService.findByUser(req.user.id, paginationDto);
   }
 
   // ==================== OBTENER DETALLE DE UNA ORDEN ====================
